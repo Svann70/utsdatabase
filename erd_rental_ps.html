@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>ERD — Sistem Rental PS/PC</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; padding: 40px; }
+  h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { color: #64748b; font-size: 14px; margin-bottom: 32px; }
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+  .card h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
+  .mermaid { text-align: center; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #f1f5f9; padding: 8px 12px; text-align: left; font-weight: 600; border: 1px solid #e2e8f0; }
+  td { padding: 7px 12px; border: 1px solid #e2e8f0; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  .pk  { background: #fef3c7; color: #92400e; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+  .fk  { background: #dbeafe; color: #1e40af; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+  .tag { background: #f1f5f9; color: #475569; font-size: 11px; padding: 2px 6px; border-radius: 4px; }
+  .rel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media print {
+    body { background: #fff; padding: 20px; }
+    .card { break-inside: avoid; }
+    .no-print { display: none; }
+  }
+  .print-btn {
+    position: fixed; top: 20px; right: 20px;
+    background: #3b82f6; color: #fff; border: none;
+    padding: 10px 20px; border-radius: 8px; cursor: pointer;
+    font-size: 14px; font-weight: 600; box-shadow: 0 2px 8px rgba(59,130,246,.4);
+  }
+  .print-btn:hover { background: #2563eb; }
+</style>
+</head>
+<body>
+<button class="print-btn no-print" onclick="window.print()">🖨️ Save as PDF</button>
+
+<h1>📊 ERD — Sistem Rental PS/PC</h1>
+<p class="subtitle">Database: <strong>rental_ps</strong> &nbsp;|&nbsp; Skema 3NF &nbsp;|&nbsp; PostgreSQL (Supabase)</p>
+
+<!-- DIAGRAM -->
+<div class="card">
+  <h2>Entity Relationship Diagram</h2>
+  <div class="mermaid">
+erDiagram
+    PELANGGAN {
+        int id_pelanggan PK
+        varchar nama_pelanggan
+        varchar no_hp
+        text alamat
+        timestamptz created_at
+    }
+    PEGAWAI {
+        int id_pegawai PK
+        varchar username
+        varchar password
+        varchar nama_pegawai
+        varchar jabatan
+        varchar no_hp
+    }
+    DEVICE {
+        int id_device PK
+        varchar nama_device
+        varchar tipe_device
+        varchar status_device
+        int harga_per_jam
+        text spesifikasi
+    }
+    MENU {
+        int id_menu PK
+        varchar nama_menu
+        int harga
+        varchar kategori
+        boolean tersedia
+    }
+    PAKET_SEWA {
+        int id_paket PK
+        varchar nama_paket
+        int durasi
+        int harga_paket
+        text deskripsi
+    }
+    TRANSAKSI {
+        int id_transaksi PK
+        int id_pelanggan FK
+        int id_device FK
+        int id_pegawai FK
+        timestamptz waktu_mulai
+        timestamptz waktu_selesai
+        int durasi_jam
+        int total_harga
+        varchar status_transaksi
+    }
+    DETAIL_TRANSAKSI {
+        int id_detail PK
+        int id_transaksi FK
+        int id_menu FK
+        int jumlah
+        int subtotal
+    }
+    PEMBAYARAN {
+        int id_pembayaran PK
+        int id_transaksi FK
+        int total_bayar
+        varchar metode_pembayaran
+        varchar status_pembayaran
+        timestamptz waktu_bayar
+    }
+    TRANSAKSI_PAKET {
+        int id PK
+        int id_transaksi FK
+        int id_paket FK
+    }
+
+    PELANGGAN    ||--o{ TRANSAKSI        : "melakukan"
+    DEVICE       ||--o{ TRANSAKSI        : "digunakan"
+    PEGAWAI      ||--o{ TRANSAKSI        : "melayani"
+    TRANSAKSI    ||--o{ DETAIL_TRANSAKSI : "memiliki"
+    MENU         ||--o{ DETAIL_TRANSAKSI : "tercantum"
+    TRANSAKSI    ||--o| PEMBAYARAN       : "dibayar"
+    TRANSAKSI    ||--o{ TRANSAKSI_PAKET  : "menggunakan"
+    PAKET_SEWA   ||--o{ TRANSAKSI_PAKET  : "diterapkan"
+  </div>
+</div>
+
+<!-- TABEL DETAIL -->
+<div class="card">
+  <h2>Tabel: PELANGGAN</h2>
+  <table>
+    <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+    <tr><td>id_pelanggan</td><td>SERIAL</td><td><span class="pk">PK</span></td></tr>
+    <tr><td>nama_pelanggan</td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+    <tr><td>no_hp</td><td>VARCHAR(20)</td><td>UNIQUE NOT NULL</td></tr>
+    <tr><td>alamat</td><td>TEXT</td><td>nullable</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMPTZ</td><td>DEFAULT NOW()</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Tabel: PEGAWAI</h2>
+  <table>
+    <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+    <tr><td>id_pegawai</td><td>SERIAL</td><td><span class="pk">PK</span></td></tr>
+    <tr><td>username</td><td>VARCHAR(50)</td><td>UNIQUE NOT NULL</td></tr>
+    <tr><td>password</td><td>VARCHAR(255)</td><td>NOT NULL</td></tr>
+    <tr><td>nama_pegawai</td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+    <tr><td>jabatan</td><td>VARCHAR(50)</td><td>CHECK: admin | staff</td></tr>
+    <tr><td>no_hp</td><td>VARCHAR(20)</td><td>nullable</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMPTZ</td><td>DEFAULT NOW()</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Tabel: DEVICE</h2>
+  <table>
+    <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+    <tr><td>id_device</td><td>SERIAL</td><td><span class="pk">PK</span></td></tr>
+    <tr><td>nama_device</td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+    <tr><td>tipe_device</td><td>VARCHAR(10)</td><td>CHECK: PS | PC</td></tr>
+    <tr><td>status_device</td><td>VARCHAR(20)</td><td>CHECK: tersedia | dipakai | maintenance</td></tr>
+    <tr><td>harga_per_jam</td><td>INTEGER</td><td>NOT NULL (rupiah)</td></tr>
+    <tr><td>spesifikasi</td><td>TEXT</td><td>nullable</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMPTZ</td><td>DEFAULT NOW()</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Tabel: MENU</h2>
+  <table>
+    <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+    <tr><td>id_menu</td><td>SERIAL</td><td><span class="pk">PK</span></td></tr>
+    <tr><td>nama_menu</td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+    <tr><td>harga</td><td>INTEGER</td><td>NOT NULL (rupiah)</td></tr>
+    <tr><td>kategori</td><td>VARCHAR(50)</td><td>CHECK: makanan | minuman</td></tr>
+    <tr><td>tersedia</td><td>BOOLEAN</td><td>DEFAULT TRUE</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMPTZ</td><td>DEFAULT NOW()</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Tabel: PAKET_SEWA</h2>
+  <table>
+    <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+    <tr><td>id_paket</td><td>SERIAL</td><td><span class="pk">PK</span></td></tr>
+    <tr><td>nama_paket</td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+    <tr><td>durasi</td><td>INTEGER</td><td>NOT NULL (jam)</td></tr>
+    <tr><td>harga_paket</td><td>INTEGER</td><td>NOT NULL (rupiah)</td></tr>
+    <tr><td>deskripsi</td><td>TEXT</td><td>nullable</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMPTZ</td><td>DEFAULT NOW()</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Tabel: TRANSAKSI</h2>
+  <table>
+    <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+    <tr><td>id_transaksi</td><td>SERIAL</td><td><span class="pk">PK</span></td></tr>
+    <tr><td>id_pelanggan</td><td>INTEGER</td><td><span class="fk">FK</span> → pelanggan</td></tr>
+    <tr><td>id_device</td><td>INTEGER</td><td><span class="fk">FK</span> → device</td></tr>
+    <tr><td>id_pegawai</td><td>INTEGER</td><td><span class="fk">FK</span> → pegawai (nullable)</td></tr>
+    <tr><td>waktu_mulai</td><td>TIMESTAMPTZ</td><td>NOT NULL</td></tr>
+    <tr><td>waktu_selesai</td><td>TIMESTAMPTZ</td><td>nullable</td></tr>
+    <tr><td>durasi_jam</td><td>INTEGER</td><td>NOT NULL</td></tr>
+    <tr><td>total_harga</td><td>INTEGER</td><td>NOT NULL (rupiah)</td></tr>
+    <tr><td>status_transaksi</td><td>VARCHAR(20)</td><td>CHECK: aktif | selesai | batal</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMPTZ</td><td>DEFAULT NOW()</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Tabel: DETAIL_TRANSAKSI</h2>
+  <table>
+    <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+    <tr><td>id_detail</td><td>SERIAL</td><td><span class="pk">PK</span></td></tr>
+    <tr><td>id_transaksi</td><td>INTEGER</td><td><span class="fk">FK</span> → transaksi (CASCADE)</td></tr>
+    <tr><td>id_menu</td><td>INTEGER</td><td><span class="fk">FK</span> → menu</td></tr>
+    <tr><td>jumlah</td><td>INTEGER</td><td>DEFAULT 1, CHECK > 0</td></tr>
+    <tr><td>subtotal</td><td>INTEGER</td><td>NOT NULL (rupiah)</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMPTZ</td><td>DEFAULT NOW()</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Tabel: PEMBAYARAN</h2>
+  <table>
+    <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+    <tr><td>id_pembayaran</td><td>SERIAL</td><td><span class="pk">PK</span></td></tr>
+    <tr><td>id_transaksi</td><td>INTEGER</td><td><span class="fk">FK</span> → transaksi</td></tr>
+    <tr><td>total_bayar</td><td>INTEGER</td><td>NOT NULL (rupiah)</td></tr>
+    <tr><td>metode_pembayaran</td><td>VARCHAR(30)</td><td>CHECK: cash | transfer | ewallet | qris</td></tr>
+    <tr><td>waktu_bayar</td><td>TIMESTAMPTZ</td><td>DEFAULT NOW()</td></tr>
+    <tr><td>status_pembayaran</td><td>VARCHAR(20)</td><td>CHECK: lunas | pending | gagal</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMPTZ</td><td>DEFAULT NOW()</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Tabel: TRANSAKSI_PAKET</h2>
+  <table>
+    <tr><th>Kolom</th><th>Tipe</th><th>Keterangan</th></tr>
+    <tr><td>id</td><td>SERIAL</td><td><span class="pk">PK</span></td></tr>
+    <tr><td>id_transaksi</td><td>INTEGER</td><td><span class="fk">FK</span> → transaksi (CASCADE)</td></tr>
+    <tr><td>id_paket</td><td>INTEGER</td><td><span class="fk">FK</span> → paket_sewa</td></tr>
+    <tr><td>created_at</td><td>TIMESTAMPTZ</td><td>DEFAULT NOW()</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Ringkasan Relasi</h2>
+  <table>
+    <tr><th>Dari</th><th>Ke</th><th>Tipe</th><th>Via</th></tr>
+    <tr><td>PELANGGAN</td><td>TRANSAKSI</td><td>1 → N</td><td>id_pelanggan</td></tr>
+    <tr><td>DEVICE</td><td>TRANSAKSI</td><td>1 → N</td><td>id_device</td></tr>
+    <tr><td>PEGAWAI</td><td>TRANSAKSI</td><td>1 → N</td><td>id_pegawai</td></tr>
+    <tr><td>TRANSAKSI</td><td>DETAIL_TRANSAKSI</td><td>1 → N</td><td>id_transaksi</td></tr>
+    <tr><td>MENU</td><td>DETAIL_TRANSAKSI</td><td>1 → N</td><td>id_menu</td></tr>
+    <tr><td>TRANSAKSI</td><td>PEMBAYARAN</td><td>1 → 1</td><td>id_transaksi</td></tr>
+    <tr><td>TRANSAKSI</td><td>TRANSAKSI_PAKET</td><td>1 → N</td><td>id_transaksi</td></tr>
+    <tr><td>PAKET_SEWA</td><td>TRANSAKSI_PAKET</td><td>1 → N</td><td>id_paket</td></tr>
+  </table>
+</div>
+
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', er: { diagramPadding: 20 } });
+</script>
+</body>
+</html>
